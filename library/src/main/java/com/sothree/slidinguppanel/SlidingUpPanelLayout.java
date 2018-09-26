@@ -1103,11 +1103,35 @@ public class SlidingUpPanelLayout extends ViewGroup {
     }
 
     /**
+     * Expands the panel, ignoring animation.
+     */
+    private void expandNoAnimation() {
+        onPanelDragged(0);
+        mMainView.requestLayout();
+        setPanelStateInternal(PanelState.EXPANDED);
+        if (mSlideableView.getVisibility() != View.VISIBLE) {
+            mSlideableView.setVisibility(View.VISIBLE);
+        }
+        dispatchOnPanelExpanded(mSlideableView);
+    }
+
+    /**
+     * Collapses the panel, ignoring animation.
+     */
+    private void collapseNoAnimation() {
+        int defaultHeight = getHeight() - getPaddingBottom() - getPaddingTop() - mPanelHeight;
+        onPanelDragged(defaultHeight);
+        mMainView.requestLayout();
+        setPanelStateInternal(PanelState.COLLAPSED);
+        dispatchOnPanelCollapsed(mSlideableView);
+    }
+
+    /**
      * Change panel state to the given state with
      *
      * @param state - new panel state
      */
-    public void setPanelState(PanelState state) {
+    public void setPanelState(PanelState state, boolean noAnimation) {
 
         // Abort any running animation, to allow state change
         if(mDragHelper.getViewDragState() == ViewDragHelper.STATE_SETTLING){
@@ -1135,10 +1159,18 @@ public class SlidingUpPanelLayout extends ViewGroup {
                     smoothSlideTo(mAnchorPoint, 0);
                     break;
                 case COLLAPSED:
-                    smoothSlideTo(0, 0);
+                    if (!noAnimation) {
+                        smoothSlideTo(0, 0);
+                    } else {
+                        collapseNoAnimation();
+                    }
                     break;
                 case EXPANDED:
-                    smoothSlideTo(1.0f, 0);
+                    if (!noAnimation) {
+                        smoothSlideTo(1.0f, 0);
+                    } else {
+                        expandNoAnimation();
+                    }
                     break;
                 case HIDDEN:
                     int newTop = computePanelTopPosition(0.0f) + (mIsSlidingUp ? +mPanelHeight : -mPanelHeight);
