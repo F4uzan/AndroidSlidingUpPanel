@@ -553,12 +553,12 @@ public class SlidingUpPanelLayout extends ViewGroup {
                     if (!isEnabled() || !isTouchEnabled()) return;
                     if (mSlideState != PanelState.EXPANDED && mSlideState != PanelState.ANCHORED) {
                         if (mAnchorPoint < 1.0f) {
-                            setPanelState(PanelState.ANCHORED);
+                            setPanelState(PanelState.ANCHORED, false);
                         } else {
-                            setPanelState(PanelState.EXPANDED);
+                            setPanelState(PanelState.EXPANDED, false);
                         }
                     } else {
-                        setPanelState(PanelState.COLLAPSED);
+                        setPanelState(PanelState.COLLAPSED, false);
                     }
                 }
             });
@@ -1108,11 +1108,10 @@ public class SlidingUpPanelLayout extends ViewGroup {
     private void expandNoAnimation() {
         onPanelDragged(0);
         mMainView.requestLayout();
-        setPanelStateInternal(PanelState.EXPANDED);
         if (mSlideableView.getVisibility() != View.VISIBLE) {
             mSlideableView.setVisibility(View.VISIBLE);
         }
-        dispatchOnPanelExpanded(mSlideableView);
+        setPanelStateInternal(PanelState.EXPANDED);
     }
 
     /**
@@ -1123,7 +1122,6 @@ public class SlidingUpPanelLayout extends ViewGroup {
         onPanelDragged(defaultHeight);
         mMainView.requestLayout();
         setPanelStateInternal(PanelState.COLLAPSED);
-        dispatchOnPanelCollapsed(mSlideableView);
     }
 
     /**
