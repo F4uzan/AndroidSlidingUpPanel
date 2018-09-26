@@ -209,6 +209,11 @@ public class SlidingUpPanelLayout extends ViewGroup {
      */
     private boolean mIsTouchEnabled;
 
+    /**
+     * Flag to indicate whether or not the panel is allowed to hide.
+     */
+    private boolean mHidingDisallowed;
+
     private float mPrevMotionX;
     private float mPrevMotionY;
     private float mInitialMotionX;
@@ -500,6 +505,15 @@ public class SlidingUpPanelLayout extends ViewGroup {
     }
 
     /**
+     * Disallow panel from hiding.
+     *
+     * @param disallow whether hiding should be disallowed.
+     */
+    public void disallowHiding(boolean disallow) {
+        mHidingDisallowed = disallow;
+    }
+
+    /**
      * Adds a panel slide listener
      *
      * @param listener
@@ -755,7 +769,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
         }
 
         // If the sliding panel is not visible, then put the whole view in the hidden state
-        if (mSlideableView.getVisibility() != VISIBLE) {
+        if (mSlideableView.getVisibility() != VISIBLE && !mHidingDisallowed) {
             mSlideState = PanelState.HIDDEN;
         }
 
@@ -831,11 +845,13 @@ public class SlidingUpPanelLayout extends ViewGroup {
                     mSlideOffset = 1.0f;
                     break;
                 case ANCHORED:
-                    mSlideOffset = mAnchorPoint;
+                     mSlideOffset = mAnchorPoint;
                     break;
                 case HIDDEN:
-                    int newTop = computePanelTopPosition(0.0f) + (mIsSlidingUp ? +mPanelHeight : -mPanelHeight);
-                    mSlideOffset = computeSlideOffset(newTop);
+                    if (!mHidingDisallowed) {
+                        int newTop = computePanelTopPosition(0.0f) + (mIsSlidingUp ? +mPanelHeight : -mPanelHeight);
+                        mSlideOffset = computeSlideOffset(newTop);
+                    }
                     break;
                 default:
                     mSlideOffset = 0.f;
@@ -1147,7 +1163,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
         if (mFirstLayout) {
             setPanelStateInternal(state);
         } else {
-            if (mSlideState == PanelState.HIDDEN) {
+            if (mSlideState == PanelState.HIDDEN && !mHidingDisallowed) {
                 mSlideableView.setVisibility(View.VISIBLE);
                 requestLayout();
             }
@@ -1170,8 +1186,10 @@ public class SlidingUpPanelLayout extends ViewGroup {
                     }
                     break;
                 case HIDDEN:
-                    int newTop = computePanelTopPosition(0.0f) + (mIsSlidingUp ? +mPanelHeight : -mPanelHeight);
-                    smoothSlideTo(computeSlideOffset(newTop), 0);
+                    if (!mHidingDisallowed) {
+                        int newTop = computePanelTopPosition(0.0f) + (mIsSlidingUp ? +mPanelHeight : -mPanelHeight);
+                        smoothSlideTo(computeSlideOffset(newTop), 0);
+                    }
                     break;
             }
         }
@@ -1414,7 +1432,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
                     setPanelStateInternal(PanelState.EXPANDED);
                 } else if (mSlideOffset == 0) {
                     setPanelStateInternal(PanelState.COLLAPSED);
-                } else if (mSlideOffset < 0) {
+                } else if (mSlideOffset < 0 && !mHidingDisallowed) {
                     setPanelStateInternal(PanelState.HIDDEN);
                     mSlideableView.setVisibility(View.INVISIBLE);
                 } else {
