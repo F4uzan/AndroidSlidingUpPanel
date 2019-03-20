@@ -22,9 +22,12 @@ import android.view.animation.Interpolator;
 
 import com.sothree.slidinguppanel.library.R;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import androidx.annotation.IntDef;
 import androidx.core.view.ViewCompat;
 
 public class SlidingUpPanelLayout extends ViewGroup {
@@ -44,7 +47,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
     /**
      * Default initial state for the component
      */
-    private static PanelState DEFAULT_SLIDE_STATE = PanelState.COLLAPSED;
+    private static int DEFAULT_SLIDE_STATE = PanelState.COLLAPSED;
 
     /**
      * Default height of the shadow above the peeking out panel
@@ -173,23 +176,29 @@ public class SlidingUpPanelLayout extends ViewGroup {
      */
     private View mMainView;
 
-    /**
+    /*
      * Current state of the slideable view.
      */
-    public enum PanelState {
-        EXPANDED,
-        COLLAPSED,
-        ANCHORED,
-        HIDDEN,
-        DRAGGING
+    @IntDef({PanelState.EXPANDED,
+            PanelState.COLLAPSED,
+            PanelState.ANCHORED,
+            PanelState.HIDDEN,
+            PanelState.DRAGGING})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface PanelState {
+        int EXPANDED = 0;
+        int COLLAPSED = 1;
+        int ANCHORED = 2;
+        int HIDDEN = 3;
+        int DRAGGING = 4;
     }
 
-    private PanelState mSlideState = DEFAULT_SLIDE_STATE;
+    private int mSlideState = DEFAULT_SLIDE_STATE;
 
     /**
      * If the current slide state is DRAGGING, this will store the last non dragging state
      */
-    private PanelState mLastNotDraggingSlideState = DEFAULT_SLIDE_STATE;
+    private int mLastNotDraggingSlideState = DEFAULT_SLIDE_STATE;
 
     /**
      * How far the panel is offset from its expanded position.
@@ -265,7 +274,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
          *
          * @param panel The child view that was slid to an collapsed position
          */
-        public void onPanelStateChanged(View panel, PanelState previousState, PanelState newState);
+        public void onPanelStateChanged(View panel, int previousState, int newState);
     }
 
     /**
@@ -278,7 +287,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
         }
 
         @Override
-        public void onPanelStateChanged(View panel, PanelState previousState, PanelState newState) {
+        public void onPanelStateChanged(View panel, int previousState, int newState) {
         }
     }
 
@@ -309,7 +318,6 @@ public class SlidingUpPanelLayout extends ViewGroup {
                 defAttrs.recycle();
             }
 
-
             TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.SlidingUpPanelLayout);
 
             if (ta != null) {
@@ -328,7 +336,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
 
                 mAnchorPoint = ta.getFloat(R.styleable.SlidingUpPanelLayout_umanoAnchorPoint, DEFAULT_ANCHOR_POINT);
 
-                mSlideState = PanelState.values()[ta.getInt(R.styleable.SlidingUpPanelLayout_umanoInitialState, DEFAULT_SLIDE_STATE.ordinal())];
+                mSlideState = ta.getInt(R.styleable.SlidingUpPanelLayout_umanoInitialState, DEFAULT_SLIDE_STATE);
 
                 int interpolatorResId = ta.getResourceId(R.styleable.SlidingUpPanelLayout_umanoScrollInterpolator, -1);
                 if (interpolatorResId != -1) {
@@ -708,7 +716,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
     }
 
 
-    void dispatchOnPanelStateChanged(View panel, PanelState previousState, PanelState newState) {
+    void dispatchOnPanelStateChanged(View panel, int previousState, int newState) {
         synchronized (mPanelSlideListeners) {
             for (PanelSlideListener l : mPanelSlideListeners) {
                 l.onPanelStateChanged(panel, previousState, newState);
@@ -876,13 +884,13 @@ public class SlidingUpPanelLayout extends ViewGroup {
 
         if (mFirstLayout) {
             switch (mSlideState) {
-                case EXPANDED:
+                case PanelState.EXPANDED:
                     mSlideOffset = 1.0f;
                     break;
-                case ANCHORED:
+                case PanelState.ANCHORED:
                      mSlideOffset = mAnchorPoint;
                     break;
-                case HIDDEN:
+                case PanelState.HIDDEN:
                     if (!mHidingDisallowed) {
                         int newTop = computePanelTopPosition(0.0f) + (mIsSlidingUp ? +mPanelHeight : -mPanelHeight);
                         mSlideOffset = computeSlideOffset(newTop);
@@ -1148,7 +1156,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
      *
      * @return the current panel state
      */
-    public PanelState getPanelState() {
+    public int getPanelState() {
         return mSlideState;
     }
 
@@ -1179,7 +1187,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
      *
      * @param state - new panel state
      */
-    public void setPanelState(PanelState state, boolean noAnimation) {
+    public void setPanelState(int state, boolean noAnimation) {
 
         // Abort any running animation, to allow state change
         if(mDragHelper.getViewDragState() == ViewDragHelper.STATE_SETTLING){
@@ -1187,8 +1195,8 @@ public class SlidingUpPanelLayout extends ViewGroup {
             mDragHelper.abort();
         }
 
-        if (state == null || state == PanelState.DRAGGING) {
-            throw new IllegalArgumentException("Panel state cannot be null or DRAGGING.");
+        if (state == PanelState.DRAGGING) {
+            throw new IllegalArgumentException("Panel state cannot be DRAGGING.");
         }
         if (!isEnabled()
                 || (!mFirstLayout && mSlideableView == null)
@@ -1203,24 +1211,24 @@ public class SlidingUpPanelLayout extends ViewGroup {
                 requestLayout();
             }
             switch (state) {
-                case ANCHORED:
+                case PanelState.ANCHORED:
                     smoothSlideTo(mAnchorPoint, 0);
                     break;
-                case COLLAPSED:
+                case PanelState.COLLAPSED:
                     if (!noAnimation) {
                         smoothSlideTo(0, 0);
                     } else {
                         collapseNoAnimation();
                     }
                     break;
-                case EXPANDED:
+                case PanelState.EXPANDED:
                     if (!noAnimation) {
                         smoothSlideTo(1.0f, 0);
                     } else {
                         expandNoAnimation();
                     }
                     break;
-                case HIDDEN:
+                case PanelState.HIDDEN:
                     if (!mHidingDisallowed) {
                         int newTop = computePanelTopPosition(0.0f) + (mIsSlidingUp ? +mPanelHeight : -mPanelHeight);
                         smoothSlideTo(computeSlideOffset(newTop), 0);
@@ -1230,9 +1238,9 @@ public class SlidingUpPanelLayout extends ViewGroup {
         }
     }
 
-    private void setPanelStateInternal(PanelState state) {
+    private void setPanelStateInternal(int state) {
         if (mSlideState == state) return;
-        PanelState oldState = mSlideState;
+        int oldState = mSlideState;
         mSlideState = state;
         dispatchOnPanelStateChanged(this, oldState, state);
     }
@@ -1441,8 +1449,8 @@ public class SlidingUpPanelLayout extends ViewGroup {
     public void onRestoreInstanceState(Parcelable state) {
         if (state instanceof Bundle && !mAlwaysResetState) {
             Bundle bundle = (Bundle) state;
-            mSlideState = (PanelState) bundle.getSerializable(SLIDING_STATE);
-            mSlideState = mSlideState == null ? DEFAULT_SLIDE_STATE : mSlideState;
+            mSlideState = (int) bundle.getSerializable(SLIDING_STATE);
+            mSlideState = mSlideState < 0 ? DEFAULT_SLIDE_STATE : mSlideState;
             state = bundle.getParcelable("superState");
         }
         super.onRestoreInstanceState(state);
