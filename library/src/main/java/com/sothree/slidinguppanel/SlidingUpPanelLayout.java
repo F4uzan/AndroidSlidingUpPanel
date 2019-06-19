@@ -8,8 +8,10 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Gravity;
@@ -20,15 +22,15 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;
 
+import androidx.annotation.IntDef;
+import androidx.core.view.ViewCompat;
+
 import com.sothree.slidinguppanel.library.R;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import androidx.annotation.IntDef;
-import androidx.core.view.ViewCompat;
 
 public class SlidingUpPanelLayout extends ViewGroup {
 
@@ -301,6 +303,15 @@ public class SlidingUpPanelLayout extends ViewGroup {
 
     public SlidingUpPanelLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+
+        // Adjust duration multiplier based off of system's transition animation scale.
+        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            mDurationMultiplier = Settings.Global.getFloat(context.getContentResolver(),
+                    Settings.Global.TRANSITION_ANIMATION_SCALE, 0);
+        } else {
+            mDurationMultiplier = Settings.System.getFloat(context.getContentResolver(),
+                    Settings.System.TRANSITION_ANIMATION_SCALE, 0);
+        }
 
         if (isInEditMode()) {
             mShadowDrawable = null;
