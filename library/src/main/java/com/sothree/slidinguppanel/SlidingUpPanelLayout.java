@@ -304,15 +304,6 @@ public class SlidingUpPanelLayout extends ViewGroup {
     public SlidingUpPanelLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        // Adjust duration multiplier based off of system's transition animation scale.
-        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            mDurationMultiplier = Settings.Global.getFloat(context.getContentResolver(),
-                    Settings.Global.TRANSITION_ANIMATION_SCALE, 0);
-        } else {
-            mDurationMultiplier = Settings.System.getFloat(context.getContentResolver(),
-                    Settings.System.TRANSITION_ANIMATION_SCALE, 0);
-        }
-
         if (isInEditMode()) {
             mShadowDrawable = null;
             mDragHelper = null;
@@ -384,6 +375,14 @@ public class SlidingUpPanelLayout extends ViewGroup {
         mDragHelper.setMinVelocity(mMinFlingVelocity * density);
 
         mIsTouchEnabled = true;
+
+        // Adjust duration multiplier based off of system's transition animation scale.
+        applyDurationAnimation();
+    }
+
+    @Override public void onWindowFocusChanged(boolean hasWindowFocus) {
+        applyDurationAnimation();
+        super.onWindowFocusChanged(hasWindowFocus);
     }
 
     /**
@@ -1292,6 +1291,17 @@ public class SlidingUpPanelLayout extends ViewGroup {
         } else if (lp.height != LayoutParams.MATCH_PARENT && !mOverlayContent) {
             lp.height = LayoutParams.MATCH_PARENT;
             mMainView.requestLayout();
+        }
+    }
+
+    private void applyDurationAnimation() {
+        // Adjust duration multiplier based off of system's transition animation scale.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            setPanelDurationMultiplier(Settings.Global.getFloat(getContext().getContentResolver(),
+                    Settings.Global.TRANSITION_ANIMATION_SCALE, 0));
+        } else {
+            setPanelDurationMultiplier(Settings.System.getFloat(getContext().getContentResolver(),
+                    Settings.System.TRANSITION_ANIMATION_SCALE, 0));
         }
     }
 
