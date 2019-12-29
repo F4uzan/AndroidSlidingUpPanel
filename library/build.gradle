@@ -6,7 +6,7 @@ repositories {
 
 dependencies {
     implementation 'androidx.annotation:annotation:1.1.0'
-    implementation 'androidx.recyclerview:recyclerview:1.1.0-beta03'
+    implementation 'androidx.recyclerview:recyclerview:1.2.0-alpha01'
 }
 
 android {
