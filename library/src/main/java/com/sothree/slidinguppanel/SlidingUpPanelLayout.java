@@ -1548,7 +1548,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
             }
 
             if (mDragHelper != null) {
-                mDragHelper.settleCapturedViewAt(releasedChild.getLeft(), target);
+                mDragHelper.settleCapturedViewAt(releasedChild.getLeft(), target, getPanelDurationMultiplier());
             }
             invalidate();
         }

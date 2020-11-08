@@ -560,11 +560,7 @@ public class ViewDragHelper {
         mCapturedView = child;
         mActivePointerId = INVALID_POINTER;
 
-        if (durationMult == 0) {
-            return forceSettleCapturedViewAt(finalLeft, finalTop, 0, 0, 0);
-        } else {
-            return forceSettleCapturedViewAt(finalLeft, finalTop, 0, 0, durationMult);
-        }
+        return forceSettleCapturedViewAt(finalLeft, finalTop, 0, 0, durationMult);
     }
 
     /**
@@ -576,9 +572,10 @@ public class ViewDragHelper {
      *
      * @param finalLeft Settled left edge position for the captured view
      * @param finalTop Settled top edge position for the captured view
+     * @param durationMult Multiplier for animation duration
      * @return true if animation should continue through {@link #continueSettling(boolean)} calls
      */
-    public boolean settleCapturedViewAt(int finalLeft, int finalTop) {
+    public boolean settleCapturedViewAt(int finalLeft, int finalTop, float durationMult) {
         if (!mReleaseInProgress) {
             throw new IllegalStateException("Cannot settleCapturedViewAt outside of a call to " +
                     "Callback#onViewReleased");
@@ -586,7 +583,7 @@ public class ViewDragHelper {
 
         return forceSettleCapturedViewAt(finalLeft, finalTop,
                 (int) mVelocityTracker.getXVelocity(mActivePointerId),
-                (int) mVelocityTracker.getYVelocity(mActivePointerId), 0);
+                (int) mVelocityTracker.getYVelocity(mActivePointerId), durationMult);
     }
 
     /**
@@ -614,12 +611,7 @@ public class ViewDragHelper {
 
         final int settleDuration = computeSettleDuration(mCapturedView, dx, dy, xvel, yvel);
 
-        if (durationMult == 0) {
-            mScroller.startScroll(startLeft, startTop, dx, dy, settleDuration);
-        } else {
-            mScroller.startScroll(startLeft, startTop, dx, dy,
-                    (int) (settleDuration * durationMult));
-        }
+        mScroller.startScroll(startLeft, startTop, dx, dy, (int) (settleDuration * durationMult));
 
         setDragState(STATE_SETTLING);
         return true;
